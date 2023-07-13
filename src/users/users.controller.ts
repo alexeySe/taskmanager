@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserDto } from './dto/user.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -11,11 +12,12 @@ export class UsersController {
         return this.usersService.createUser(usersDto)
     }
 
-    @Get()
-    findUserByEmail(@Body() usersDto: UserDto) {
-        return this.usersService.getUserByEmail(usersDto.email)
-    }
-
+    // @Get()
+    // findUserByEmail(@Body() usersDto: UserDto) {
+    //     return this.usersService.getUserByEmail(usersDto.email)
+    // }
+    
+    @UseGuards(JwtAuthGuard)
     @Get()
     findAllUsersByEmail() {
         return this.usersService.getAllUsersByEmail()
