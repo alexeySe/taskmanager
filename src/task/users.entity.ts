@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { User } from 'src/users/users.entity';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class Task {
@@ -17,7 +18,12 @@ export class Task {
   @UpdateDateColumn({ default: new Date(), type: 'timestamptz' })
   updatedAt!: Date;
 
-//   @ManyToOne(() => User, (user) => user.id)
-//   user: User
+
+  @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column()
+  userId: number;
 
 }

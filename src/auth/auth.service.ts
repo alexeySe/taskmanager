@@ -1,9 +1,12 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserDto } from 'src/users/dto/user.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcryptjs'
-import { User } from 'src/users/users.entity';
+
+export interface IUser {
+    id: string,
+    email: string
+}
 
 @Injectable()
 export class AuthService {
@@ -11,36 +14,23 @@ export class AuthService {
         private jwtService: JwtService) { }
 
 
-    async login(userDto: UserDto) {
-        const user = await this.validateUser(userDto)
-        return this.generateToken(user)
-
-    }
-
-    async registration(userDto: UserDto) {
-        const candidate = await this.usersService.getUserByEmail(userDto.email)
-        if (candidate) {
-            throw new HttpException('Пользователь с таким email существует', HttpStatus.BAD_REQUEST)
-        }
-        const hashPassword = await bcrypt.hash(userDto.password, 5);
-        const user = await this.usersService.createUser({ ...userDto, password: hashPassword })
-        return this.generateToken(user)
-    }
-
-    private async generateToken(user: User) {
-        const payload = { email: user.email, id: user.id }
+    async login(user: IUser) {
+        const {id, email} = user
         return {
-            token: this.jwtService.sign(payload)
+            id, email, token: this.jwtService.sign({id: user.id, email: user.email})
         }
+    
+
     }
 
-    private async validateUser(userDto: UserDto) {
-        const user = await this.usersService.getUserByEmail(userDto.email)
-        const passwordEquals = await bcrypt.compare(userDto.password, user.password)
+    async validateUser(email: string, password: string) {
+        const user = await this.usersService.getUserByEmail(email)
+        const passwordEquals = await bcrypt.compare(password, user.password)
         if (user && passwordEquals) {
             return user
         }
         throw new UnauthorizedException({ message: 'Некорректный емайл или пароль' })
     }
+
 
 }

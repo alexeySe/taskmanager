@@ -1,16 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './users.entity';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs'
 
 @Injectable()
 export class UsersService {
 
     constructor(@InjectRepository(User) private userRepository: Repository<User>) { }
 
-    async createUser(dto: UserDto) {
-        const user = await this.userRepository.save(dto)
+    async createUser(userDto: UserDto) {
+        const existUser = await this.userRepository.findOne({
+            where: {
+                email: userDto.email
+            }
+        })
+        if (existUser) {
+            throw new HttpException('Пользователь с таким email существует', HttpStatus.BAD_REQUEST)
+        }
+        const user = await this.userRepository.save({
+            email: userDto.email,
+            password: await bcrypt.hash(userDto.password, 5)
+        })
         return user
     }
 
