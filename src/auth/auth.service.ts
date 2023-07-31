@@ -13,14 +13,11 @@ export class AuthService {
     constructor(private usersService: UsersService,
         private jwtService: JwtService) { }
 
-
     async login(user: IUser) {
         const {id, email} = user
         return {
             id, email, token: this.jwtService.sign({id: user.id, email: user.email})
         }
-    
-
     }
 
     async validateUser(email: string, password: string) {

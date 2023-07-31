@@ -11,12 +11,7 @@ export class UsersController {
     create(@Body() usersDto: UserDto) {
         return this.usersService.createUser(usersDto)
     }
-
-    // @Get()
-    // findUserByEmail(@Body() usersDto: UserDto) {
-    //     return this.usersService.getUserByEmail(usersDto.email)
-    // }
-    
+   
     @UseGuards(JwtAuthGuard)
     @Get()
     findAllUsersByEmail() {
