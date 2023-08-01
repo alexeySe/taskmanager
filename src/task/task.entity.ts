@@ -12,18 +12,15 @@ export class Task {
   @Column({nullable: false})
   text: string;
 
-  @CreateDateColumn({ default: new Date(), type: 'timestamptz' })
-  createdAt!: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-  @UpdateDateColumn({ default: new Date(), type: 'timestamptz' })
-  updatedAt!: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'userId' })
+  
   user: User;
-
-  @Column()
-  userId: number;
 
 }
