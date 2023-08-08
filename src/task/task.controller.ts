@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { TaskDto } from './dto/task.dto';
 import { TaskService } from './task.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { FindTaskDto } from './dto/find.task.dto';
+import { UpdateTaskDto } from './dto/update.task.dto';
 
 @Controller('tasks')
 export class TaskController {
@@ -16,7 +18,25 @@ export class TaskController {
 
     @Get()
     @UseGuards(JwtAuthGuard)
-    findAll(@Req() req) {
-        return this.taskService.findAll(+req.user.id)
+    findAll() {
+        return this.taskService.findAll()
     }
+
+    @Get('task')
+    @UseGuards(JwtAuthGuard)
+    findOne(@Body() findDto: FindTaskDto, @Req() req) {
+        return this.taskService.findOne(findDto.id, +req.user.id)
+    }
+    @Put()
+    @UseGuards(JwtAuthGuard)
+    updateTask(@Body() updateDto: UpdateTaskDto , @Req() req) {
+        return this.taskService.updateTask(updateDto, +req.user.id)
+    }
+
+    @Delete()
+    @UseGuards(JwtAuthGuard)
+    deleteTask(@Body() findDto: FindTaskDto, @Req() req) {
+        return this.taskService.deleteTask(findDto.id, +req.user.id)
+    }
+
 }

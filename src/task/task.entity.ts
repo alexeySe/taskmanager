@@ -1,5 +1,5 @@
 import { User } from 'src/users/users.entity';
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { TaskStatusEnum } from './enums/task.enums';
 
 @Entity()
@@ -27,8 +27,8 @@ export class Task {
   updatedAt: Date;
 
 
-  @ManyToOne(() => User, (user) => user.id)
-  
-  user: User;
+  @ManyToMany(() => User)
+  @JoinTable()
+  users: User[]
 
 }
