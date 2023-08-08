@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './users.entity';
@@ -31,11 +31,55 @@ export class UsersService {
     }
 
     async getUserByEmail(email: string) {
-        const user = await this.userRepository.findOneBy({email})
-        if(!user) {
+        const user = await this.userRepository.findOneBy({ email })
+        if (!user) {
             throw new NotFoundException('Пользователь с таким email не существует')
         }
         return user
-       
+
     }
+
+    async getUserById(id: number) {
+        const user = await this.userRepository.findOneBy({ id })
+        if (!user) {
+            throw new NotFoundException('Пользователь не существует')
+        }
+        return user
+
+    }
+
+    async updateUser(userDto: UserDto, id: number) {
+        let user = await this.userRepository.findOneBy({ id })
+        if (!user) {
+            throw new NotFoundException('Пользователь не существует')
+        }
+
+        if (user.id !== id) {
+            throw new ForbiddenException('Невозможно обновить пользователя с другим идентификатором');
+        }
+
+        user.email = userDto.email;
+        user.password = await bcrypt.hash(userDto.password, 5);
+
+        const updatedUser = await this.userRepository.save(user);
+        return updatedUser;
+    }
+
+    async deleteUser(id: number) {
+        let user = await this.userRepository.findOneBy({ id })
+        if (!user) {
+            throw new NotFoundException('Пользователь не существует')
+        }
+
+        if (user.id !== id) {
+            throw new ForbiddenException('Невозможно обновить пользователя с другим идентификатором');
+        }
+
+        await this.userRepository.delete(user);
+        
+        throw new HttpException('Пользователь удалён', HttpStatus.OK)
+    }
+
+
+
 }
