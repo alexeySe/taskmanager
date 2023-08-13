@@ -1,7 +1,10 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
-import * as bcrypt from 'bcryptjs'
+import * as crypto from 'crypto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/users/users.entity';
+import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 
 export interface IUser {
     id: string,
@@ -10,8 +13,9 @@ export interface IUser {
 
 @Injectable()
 export class AuthService {
-    constructor(private usersService: UsersService,
-        private jwtService: JwtService) { }
+    constructor(@InjectRepository(User) private userRepository: Repository<User>,
+        private jwtService: JwtService,
+        private readonly configService: ConfigService) { }
 
     async login(user: IUser) {
         const {id, email} = user
@@ -21,17 +25,24 @@ export class AuthService {
     }
 
     async validateUser(email: string, password: string) {
+        const hmac = crypto.createHmac('sha256', this.configService.get('HASH_SECRET'));
+        hmac.update(password);
+        const hashedPassword = hmac.digest('hex');
 
-
-
-        const user = await this.usersService.getUserByEmail(email)
-        
-        const passwordEquals = await bcrypt.compare(password, user.password)
-        if (user && passwordEquals) {
+        const user = await this.getUserByEmail(email)
+               
+        if (user && hashedPassword=== user.password) {
             return user
         }
-        throw new UnauthorizedException({ message: 'Некорректный емайл или пароль' })
+        throw new UnauthorizedException({ message: 'Incorrect email or password' })
     }
 
+    async getUserByEmail(email: string) {
+        const user = await this.userRepository.findOneBy({ email })
+        if (!user) {
+            throw new NotFoundException('Пользователь с таким email не существует')
+        }
+        return user
 
+    }
 }

@@ -1,5 +1,4 @@
 import { IsNotEmpty, IsString } from "class-validator"
-import { User } from "src/users/users.entity"
 import { TaskStatusEnum } from "../enums/task.enums"
 
 export class UpdateTaskDto {
