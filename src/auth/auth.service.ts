@@ -18,9 +18,9 @@ export class AuthService {
         private readonly configService: ConfigService) { }
 
     async login(user: IUser) {
-        const {id, email} = user
+        const { id, email } = user
         return {
-            id, email, token: this.jwtService.sign({id: user.id, email: user.email})
+            id, email, token: this.jwtService.sign({ id: user.id, email: user.email })
         }
     }
 
@@ -30,19 +30,18 @@ export class AuthService {
         const hashedPassword = hmac.digest('hex');
 
         const user = await this.getUserByEmail(email)
-               
-        if (user && hashedPassword=== user.password) {
+
+        if (user && hashedPassword === user.password) {
             return user
         }
         throw new UnauthorizedException({ message: 'Incorrect email or password' })
     }
 
     async getUserByEmail(email: string) {
-        const user = await this.userRepository.findOneBy({ email })
-        if (!user) {
-            throw new NotFoundException('Пользователь с таким email не существует')
-        }
-        return user
-
+            const user = await this.userRepository.findOneBy({ email })
+            if (!user) {
+                throw new NotFoundException('Пользователь с таким email не существует')
+            }
+            return user
     }
 }

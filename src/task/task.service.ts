@@ -15,31 +15,38 @@ export class TaskService {
 
     async createTask(dto: TaskDto, id: number) {
         if (Object.values(TaskStatusEnum).includes(dto.status as TaskStatusEnum)) {
-            const user = await this.userRepository.findOneBy({ id });
-            // const user2 = await this.userRepository.findOneBy({ id: 12 }); // просто потестить
-            // const user3 = await this.userRepository.findOneBy({ id: 13 });
-            const newTask = new Task();
-            newTask.title = dto.title;
-            newTask.text = dto.text;
-            newTask.status = dto.status;
+            try {
+                const user = await this.userRepository.findOneBy({ id });
+                // const user2 = await this.userRepository.findOneBy({ id: 12 }); // просто потестить
+                // const user3 = await this.userRepository.findOneBy({ id: 13 });
+                const newTask = new Task();
+                newTask.title = dto.title;
+                newTask.text = dto.text;
+                newTask.status = dto.status;
 
-            newTask.users = [user]; // добавлять больше пользователей из проекта
-
-            return await this.taskRepository.save(newTask);
+                newTask.users = [user]; // добавлять больше пользователей из проекта
+                return await this.taskRepository.save(newTask);
+            } catch (error) {
+                throw new Error(error)
+            }
         }
         throw new BadRequestException(`Invalid task status: ${dto.status}`)
     }
 
-    // просто смотреть что есть
+    //  посмотреть что есть
     async findAll() {
-        return await this.taskRepository.find({
-            relations: {
-                users: true,
-            },
-            order: {
-                createdAt: 'DESC'
-            }
-        })
+        try {
+            return await this.taskRepository.find({
+                relations: {
+                    users: true,
+                },
+                order: {
+                    createdAt: 'DESC'
+                }
+            })
+        } catch (error) {
+            throw new Error(error)
+        }
     }
 
     async findOne(taskId: number, userId: number) {
@@ -77,46 +84,49 @@ export class TaskService {
             throw new NotFoundException('This task is not available')
         }
         if (Object.values(TaskStatusEnum).includes(dto.status as TaskStatusEnum)) {
-            const user = await this.userRepository.findOneBy({ id });
-            // const user2 = await this.userRepository.findOneBy({ id: 12 }); // просто потестить
-            // const user3 = await this.userRepository.findOneBy({ id: 13 });
-            const newTask = task;
-            newTask.title = dto.title;
-            newTask.text = dto.text;
-            newTask.status = dto.status;
+            try {
+                const user = await this.userRepository.findOneBy({ id });
+                // const user2 = await this.userRepository.findOneBy({ id: 12 }); // просто потестить
+                // const user3 = await this.userRepository.findOneBy({ id: 13 });
+                const newTask = task;
+                newTask.title = dto.title;
+                newTask.text = dto.text;
+                newTask.status = dto.status;
 
-            newTask.users = [user]; // добавлять больше пользователей из проекта
+                newTask.users = [user]; // добавлять больше пользователей из проекта
 
-            return await this.taskRepository.save(newTask);
+                return await this.taskRepository.save(newTask);
+            } catch (error) {
+                throw new Error(error)
+            }
         }
         throw new BadRequestException(`Invalid task status: ${dto.status}`)
     }
 
-    
+
     async deleteTask(taskId: number, userId: number) {
-        const task = await this.taskRepository.findOne({
-            relations: ['users'],
-            where: {
-                id: taskId
-            },
-        });
-        console.log(task)
-        // переделать под нормальный запрос
-        if (!task) {
-            throw new NotFoundException('Task not found')
-        }
-        if (!task.users.some(user => user.id === userId)) {
-            throw new NotFoundException('This task is not available')
-        }
+            const task = await this.taskRepository.findOne({
+                relations: ['users'],
+                where: {
+                    id: taskId
+                },
+            });
+            console.log(task)
+            // переделать под нормальный запрос
+            if (!task) {
+                throw new NotFoundException('Task not found')
+            }
+            if (!task.users.some(user => user.id === userId)) {
+                throw new NotFoundException('This task is not available')
+            }
 
-        task.users = [];
-        await this.taskRepository.save(task);
-        await this.taskRepository.delete(taskId);
-         
-        throw new HttpException('Task deleted', HttpStatus.OK)
+            task.users = [];
+            try {
+                await this.taskRepository.save(task);
+                await this.taskRepository.delete(taskId);
+            } catch (error) {
+                throw new Error(error)
+            }
+            throw new HttpException('Task deleted', HttpStatus.OK)
     }
-
-
-
-
 }
