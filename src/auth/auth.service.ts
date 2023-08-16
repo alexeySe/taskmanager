@@ -1,46 +1,47 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserDto } from 'src/users/dto/user.dto';
-import { UsersService } from 'src/users/users.service';
-import * as bcrypt from 'bcryptjs'
+import * as crypto from 'crypto';
+import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/users.entity';
+import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+
+export interface IUser {
+    id: string,
+    email: string
+}
 
 @Injectable()
 export class AuthService {
-    constructor(private usersService: UsersService,
-        private jwtService: JwtService) { }
+    constructor(@InjectRepository(User) private userRepository: Repository<User>,
+        private jwtService: JwtService,
+        private readonly configService: ConfigService) { }
 
-
-    async login(userDto: UserDto) {
-        const user = await this.validateUser(userDto)
-        return this.generateToken(user)
-
-    }
-
-    async registration(userDto: UserDto) {
-        const candidate = await this.usersService.getUserByEmail(userDto.email)
-        if (candidate) {
-            throw new HttpException('Пользователь с таким email существует', HttpStatus.BAD_REQUEST)
-        }
-        const hashPassword = await bcrypt.hash(userDto.password, 5);
-        const user = await this.usersService.createUser({ ...userDto, password: hashPassword })
-        return this.generateToken(user)
-    }
-
-    private async generateToken(user: User) {
-        const payload = { email: user.email, id: user.id }
+    async login(user: IUser) {
+        const { id, email } = user
         return {
-            token: this.jwtService.sign(payload)
+            id, email, token: this.jwtService.sign({ id: user.id, email: user.email })
         }
     }
 
-    private async validateUser(userDto: UserDto) {
-        const user = await this.usersService.getUserByEmail(userDto.email)
-        const passwordEquals = await bcrypt.compare(userDto.password, user.password)
-        if (user && passwordEquals) {
+    async validateUser(email: string, password: string) {
+        const hmac = crypto.createHmac('sha256', this.configService.get('HASH_SECRET'));
+        hmac.update(password);
+        const hashedPassword = hmac.digest('hex');
+
+        const user = await this.getUserByEmail(email)
+
+        if (user && hashedPassword === user.password) {
             return user
         }
-        throw new UnauthorizedException({ message: 'Некорректный емайл или пароль' })
+        throw new UnauthorizedException({ message: 'Incorrect email or password' })
     }
 
+    async getUserByEmail(email: string) {
+            const user = await this.userRepository.findOneBy({ email })
+            if (!user) {
+                throw new NotFoundException('Пользователь с таким email не существует')
+            }
+            return user
+    }
 }
