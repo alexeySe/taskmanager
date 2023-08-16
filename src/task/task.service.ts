@@ -17,8 +17,8 @@ export class TaskService {
         if (Object.values(TaskStatusEnum).includes(dto.status as TaskStatusEnum)) {
             try {
                 const user = await this.userRepository.findOneBy({ id });
-                // const user2 = await this.userRepository.findOneBy({ id: 12 }); // просто потестить
-                // const user3 = await this.userRepository.findOneBy({ id: 13 });
+                // const user2 = await this.userRepository.findOneBy({ id: 21 }); // просто потестить
+                // const user3 = await this.userRepository.findOneBy({ id: 22 });
                 const newTask = new Task();
                 newTask.title = dto.title;
                 newTask.text = dto.text;
@@ -34,16 +34,38 @@ export class TaskService {
     }
 
     //  посмотреть что есть
-    async findAll() {
+    async findAllAdmin(filterStatus?: TaskStatusEnum) {
         try {
-            return await this.taskRepository.find({
-                relations: {
-                    users: true,
-                },
-                order: {
-                    createdAt: 'DESC'
-                }
-            })
+            const queryBuilder = this.taskRepository.createQueryBuilder('task')
+            if(filterStatus) {
+                queryBuilder.where('task.status = :status', {status: filterStatus})
+            }
+            const tasks = queryBuilder
+            .leftJoinAndSelect('task.users', 'user')
+            .orderBy('task.createdAt', 'DESC')
+            .getMany()
+            return tasks
+            
+        } catch (error) {
+            throw new Error(error)
+        }
+    }
+
+    async findAll(userId: number, filterStatus?: TaskStatusEnum) {
+        try {
+            const queryBuilder = this.taskRepository.createQueryBuilder('task')
+            if(filterStatus) {
+                queryBuilder.where('task.status = :status', {status: filterStatus})
+            }
+            if (userId) {
+                queryBuilder.andWhere('user.id = :userId', { userId });
+            }
+            const tasks = await queryBuilder
+            .leftJoinAndSelect('task.users', 'user')
+            .orderBy('task.createdAt', 'DESC')
+            .getMany()
+            return tasks
+            
         } catch (error) {
             throw new Error(error)
         }

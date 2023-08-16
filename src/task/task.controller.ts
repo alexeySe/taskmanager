@@ -4,6 +4,8 @@ import { TaskService } from './task.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { FindTaskDto } from './dto/find.task.dto';
 import { UpdateTaskDto } from './dto/update.task.dto';
+import { TaskStatusEnum } from './enums/task.enums';
+import { FindAllTaskDto } from './dto/findAll.task.dto';
 
 @Controller('tasks')
 export class TaskController {
@@ -16,10 +18,16 @@ export class TaskController {
         return this.taskService.createTask(dto, +req.user.id)
     }
 
+    @Get('admin')
+    @UseGuards(JwtAuthGuard)
+    findAllAdmin(@Body() findAllTaskDto: FindAllTaskDto) {
+        return this.taskService.findAllAdmin(findAllTaskDto.status)
+    }
+
     @Get()
     @UseGuards(JwtAuthGuard)
-    findAll() {
-        return this.taskService.findAll()
+    findAll(@Body() findAllTaskDto: FindAllTaskDto, @Req() req) {
+        return this.taskService.findAll(+req.user.id, findAllTaskDto.status)
     }
 
     @Get('task')
